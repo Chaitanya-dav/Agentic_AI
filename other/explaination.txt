@@ -161,13 +161,21 @@ Live Policy Boundaries: Real-time evaluation of risk level, limits, AML/sanction
 Database Engine: Uses SQLite in WAL mode with atomic CAS for local simplicity. In a high-throughput production deployment, PostgreSQL with row-level locking (SELECT ... FOR UPDATE) should be utilized.
 Key Management: Uses HMAC-SHA256 with an application secret key. In multi-cluster production environments, an asymmetric key pair (Ed25519 or ECDSA) backed by AWS KMS or HashiCorp Vault is recommended.
 LLM Provider Mode: Operates out-of-the-box with USE_MOCK_LLM=true for 100% offline determinism. If an OPENAI_API_KEY is provided in .env, it automatically switches to live LangChain/LangGraph OpenAI models.
-Detailed documentation and walkthrough artifacts:
-Implementation Plan: 
-implementation_plan.md
-Walkthrough Document: 
-walkthrough.md
-Project README: 
 
-README.md
-Walkthrough
-11:23 AM
+
+
+DOMAIN WHERE THIS CAN BE USED :-
+|-----------------|--------------------------------|-------------------------------------|
+| Domain          | Sensitive action               | Attacker's goal                     |
+| --------------- | ------------------------------ | ----------------------------------- |
+| 🏦 Banking      | Transfer money                 | Steal/increase funds                |
+| 💳 Payments     | Approve payment                | Duplicate/replay payment            |
+| ☁️ Cloud        | Delete/modify infrastructure   | Destroy resources                   |
+| 🔐 IAM          | Grant admin privileges         | Gain unauthorized access            |
+| 🏭 Industrial   | Change machine parameters      | Damage equipment/disrupt production |
+| 🚀 DevOps       | Deploy production code         | Inject malicious code               |
+| 🏥 Healthcare   | Modify sensitive records       | Alter/delete data                   |
+| 🏢 Enterprise   | Approve financial transactions | Fraud                               |
+| 📦 Supply chain | Approve shipment/order         | Manipulate orders                   |
+| 🧑‍💻 Software  | Merge privileged code          | Introduce malicious changes         |
+|-----------------|--------------------------------|-------------------------------------|
