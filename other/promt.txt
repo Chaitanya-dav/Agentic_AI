@@ -1,0 +1,628 @@
+Build a complete working prototype today for the following project:
+
+# PROJECT
+
+Agentic AI–Driven Secure Approval and Execution System
+
+The system is based on a secure approval protocol with:
+
+* canonicalisation
+* SHA-256 payload hashing
+* suspension/checkpointing
+* approval notification/claim
+* approval token containing BOTH payload_hash and approval_id
+* resume with concurrency protection
+* two hash comparisons
+* four-eyes enforcement
+* expiry validation
+* boundary/policy re-evaluation at resume
+* protection against tampering, replay, expiry and self-approval
+* prevention of duplicate execution under concurrent approvals
+
+IMPORTANT ARCHITECTURAL PRINCIPLE:
+Do NOT allow an LLM/AI agent to directly override cryptographic or deterministic security controls.
+
+Use Agentic AI for orchestration, analysis, investigation, risk explanation and workflow decisions.
+Use deterministic code for final security enforcement.
+
+# RECOMMENDED STACK
+
+Backend:
+
+* Python
+* FastAPI
+* SQLite for the prototype
+* SQLAlchemy
+* hashlib for SHA-256
+* Pydantic
+
+Agent framework:
+
+* LangGraph
+
+LLM:
+
+* OpenAI API through environment variable OPENAI_API_KEY
+* Make the LLM provider configurable so the project can run with another provider if necessary.
+
+Frontend:
+
+* Simple HTML/CSS/JavaScript dashboard
+* Do not overcomplicate the frontend.
+* The dashboard must be visually polished and suitable for a project demonstration.
+
+# AGENT ARCHITECTURE
+
+Implement four logical agents:
+
+1. ACTION ANALYSIS AGENT
+   Responsibilities:
+
+* Accept natural-language action requests.
+* Extract structured fields such as:
+  action_type
+  amount
+  currency
+  recipient
+  creator
+  description
+* Normalize/canonicalize the action.
+* Calculate the SHA-256 payload hash through a deterministic tool.
+* Estimate risk and explain why approval is required.
+* Return structured JSON.
+
+The LLM should NOT calculate hashes itself.
+It must call a deterministic hashing tool.
+
+2. APPROVAL ORCHESTRATOR AGENT
+   Responsibilities:
+
+* Receive the structured action.
+* Determine whether approval is required.
+* Determine the required approver role.
+* Create a unique approval_id.
+* Create an approval request.
+* Enforce four-eyes policy:
+  creator_id MUST NOT equal approver_id.
+* Maintain approval state.
+
+3. SECURITY VERIFICATION AGENT
+   Responsibilities:
+
+* Verify an action before execution.
+* Call deterministic security tools to check:
+
+  1. current payload hash
+  2. checkpoint payload hash
+  3. token payload hash
+  4. approval_id
+  5. expiry
+  6. creator/approver separation
+  7. approval status
+  8. whether approval has already been consumed
+  9. current policy/boundary conditions
+* Produce a human-readable explanation of the decision.
+* The agent may investigate and explain, but deterministic security functions make the actual PASS/REFUSE decision.
+
+4. EXECUTION AGENT
+   Responsibilities:
+
+* Execute an action ONLY when the security verification result is valid.
+* Use a database transaction.
+* Ensure exactly-once execution.
+* Mark the approval as CONSUMED.
+* Record the execution in audit logs.
+* If verification fails, do not execute.
+
+# CORE SECURITY PROTOCOL
+
+Every action must be canonicalized before hashing.
+
+Example canonical representation:
+
+amount=50000|currency=INR|recipient=RAVI|action_type=PAYMENT
+
+Calculate:
+
+SHA256(canonical_payload)
+
+Store:
+payload_hash
+
+When approval is created, generate:
+
+approval_id
+
+The approval token must logically contain:
+
+{
+"approval_id": "...",
+"payload_hash": "...",
+"expires_at": "..."
+}
+
+CRITICAL:
+Never bind approval only to payload_hash.
+
+Two genuinely identical actions can have the same payload_hash but MUST have different approval_id values.
+
+Therefore execution must require:
+
+token.payload_hash == current_payload_hash
+
+AND
+
+token.approval_id == stored_approval_id
+
+AND
+
+checkpoint.payload_hash == current_payload_hash
+
+AND
+
+approval is not expired
+
+AND
+
+approval is not consumed
+
+AND
+
+creator_id != approver_id
+
+AND
+
+current policy boundaries are satisfied.
+
+# CONCURRENCY
+
+Implement protection against two simultaneous execution requests.
+
+The system must guarantee:
+
+Two simultaneous attempts using the same approval
+↓
+Only one execution
+↓
+Second attempt is rejected as already consumed.
+
+Use a transactional database operation.
+
+Document that SQLite is used for the demo and production deployment should use PostgreSQL row locking/SELECT FOR UPDATE.
+
+# SUSPEND AND RESUME
+
+Actions must not immediately execute after creation.
+
+Workflow:
+
+CREATE ACTION
+→ CANONICALIZE
+→ HASH
+→ CREATE APPROVAL
+→ SUSPEND
+→ SAVE CHECKPOINT
+→ HUMAN APPROVAL
+→ RESUME
+→ RE-VALIDATE EVERYTHING
+→ EXECUTE OR REFUSE
+
+The checkpoint must contain enough information to verify that the action has not changed.
+
+# BOUNDARY RE-EVALUATION
+
+At resume time, do NOT assume that an approval is still valid simply because it was previously approved.
+
+Re-run current policy boundaries.
+
+Create a simulated environment containing values such as:
+
+risk_level
+recipient_status
+daily_limit
+account_status
+transaction_limit
+
+Example:
+
+Monday:
+risk_level = LOW
+recipient_status = TRUSTED
+
+Approval succeeds.
+
+Later:
+risk_level = HIGH
+recipient_status = BLOCKED
+
+On resume, the security system must refuse execution.
+
+Display:
+
+"Approval was cryptographically valid, but execution was refused because current policy boundaries changed."
+
+# FOUR ATTACK DEMONSTRATIONS
+
+The dashboard MUST include buttons to demonstrate four attacks.
+
+ATTACK 1: TAMPERING
+
+Create:
+₹50,000 → Ravi
+
+Approve it.
+
+Then modify payload to:
+₹500,000 → Ravi
+
+The system must detect:
+
+approved_hash != current_hash
+
+Result:
+REFUSED — PAYLOAD TAMPERING DETECTED
+
+ATTACK 2: REPLAY ACROSS IDENTICAL APPROVALS
+
+Create two genuinely identical actions:
+
+Action A:
+₹10,000 → Ravi
+approval_id = A001
+
+Action B:
+₹10,000 → Ravi
+approval_id = A002
+
+They should have the same payload_hash but different approval IDs.
+
+Attempt to use A001's approval token for Action B.
+
+Expected:
+
+payload_hash check = PASS
+approval_id check = FAIL
+
+Result:
+REFUSED — APPROVAL REPLAY / APPROVAL ID MISMATCH
+
+This attack is mandatory and must clearly demonstrate why binding only the payload hash is insecure.
+
+ATTACK 3: EXPIRY
+
+Create and approve an action.
+
+Set expiry to a time in the past or use a simulation clock.
+
+Attempt execution.
+
+Result:
+REFUSED — APPROVAL EXPIRED
+
+ATTACK 4: SELF-APPROVAL
+
+Creator:
+Alice
+
+Approver:
+Alice
+
+Result:
+REFUSED — FOUR-EYES POLICY VIOLATION
+
+# ADDITIONAL DEMO
+
+Create a "WORLD CHANGED" scenario.
+
+Approve an action while:
+risk = LOW
+
+Change the simulated environment to:
+risk = HIGH
+
+Resume.
+
+The system must re-run boundaries and refuse execution.
+
+# FRONTEND
+
+Create a professional security-dashboard UI.
+
+Include:
+
+1. Dashboard
+
+* Total actions
+* Pending approvals
+* Approved
+* Executed
+* Refused
+* Attack attempts blocked
+
+2. Create Action
+   Natural-language input:
+   "Transfer ₹50,000 to Ravi"
+
+Show:
+
+* parsed action
+* canonical payload
+* SHA-256 hash
+* risk level
+
+3. Approval Panel
+   Show:
+
+* action ID
+* approval ID
+* creator
+* approver
+* payload hash
+* expiry
+* status
+
+4. Security Verification Panel
+   Show each check:
+
+✓ Current payload hash
+✓ Checkpoint hash
+✓ Token hash
+✓ Approval ID
+✓ Expiry
+✓ Four-eyes
+✓ Approval status
+✓ Boundary validation
+✓ Replay protection
+
+Use green/red status indicators.
+
+5. Agent Activity Timeline
+
+Example:
+
+Action Analysis Agent
+→ Parsed transaction
+
+Approval Orchestrator Agent
+→ Created approval A001
+
+Human Approver
+→ Approved A001
+
+Security Verification Agent
+→ Recomputed SHA-256
+
+Security Verification Agent
+→ Hash matched
+
+Security Verification Agent
+→ Approval ID matched
+
+Security Verification Agent
+→ Boundary check passed
+
+Execution Agent
+→ Transaction executed
+
+6. Attack Lab
+
+Provide buttons:
+
+[Normal Transaction]
+
+[Tamper Payload]
+
+[Replay Approval]
+
+[Expire Approval]
+
+[Self Approval]
+
+[Change World / Boundary]
+
+Each should run the complete workflow and display exactly why the attack was accepted or rejected.
+
+# API ENDPOINTS
+
+Implement clean endpoints such as:
+
+POST /actions
+GET /actions
+GET /actions/{id}
+
+POST /approvals
+POST /approvals/{id}/claim
+POST /approvals/{id}/approve
+
+POST /actions/{id}/resume
+POST /actions/{id}/execute
+
+POST /attacks/tamper
+POST /attacks/replay
+POST /attacks/expiry
+POST /attacks/self-approval
+POST /attacks/world-changed
+
+GET /audit/{action_id}
+
+GET /health
+
+# DATABASE
+
+Create tables:
+
+actions
+approvals
+checkpoints
+audit_logs
+users
+environment_state
+
+Use SQLAlchemy models.
+
+Store complete audit information.
+
+# TESTS
+
+Write automated tests for:
+
+1. Normal approval succeeds.
+2. Tampered payload fails.
+3. Replay across identical payloads fails.
+4. Expired approval fails.
+5. Self approval fails.
+6. Boundary change fails.
+7. Consumed approval cannot execute again.
+8. Two simultaneous execution requests produce exactly one effect.
+9. Approval ID mismatch fails even if payload hashes match.
+10. Checkpoint hash mismatch fails.
+
+The replay test is especially important.
+
+# SECURITY RULE
+
+NEVER allow the LLM to return:
+
+"approved"
+
+and then directly execute the action.
+
+Instead:
+
+LLM Agent
+→ calls deterministic security tools
+→ tools return PASS/FAIL
+→ workflow follows deterministic result
+→ execution happens only after all required checks PASS.
+
+# PROJECT STRUCTURE
+
+Create a clean structure similar to:
+
+backend/
+main.py
+config.py
+database.py
+models.py
+schemas.py
+
+```
+agents/
+    action_agent.py
+    approval_agent.py
+    security_agent.py
+    execution_agent.py
+    graph.py
+
+security/
+    canonicalization.py
+    hashing.py
+    tokens.py
+    policy.py
+    concurrency.py
+
+services/
+    action_service.py
+    approval_service.py
+    execution_service.py
+    audit_service.py
+
+tests/
+    test_approval.py
+    test_attacks.py
+    test_concurrency.py
+```
+
+frontend/
+index.html
+style.css
+app.js
+
+README.md
+requirements.txt
+.env.example
+
+# README
+
+Write a complete README explaining:
+
+* Problem
+* Why traditional approval systems are vulnerable
+* Proposed solution
+* Agentic AI architecture
+* Security architecture
+* Four attack scenarios
+* Why payload_hash alone is insufficient
+* Why approval_id is required
+* Four-eyes principle
+* Checkpoint/resume
+* Boundary re-evaluation
+* Concurrency handling
+* Installation
+* Environment variables
+* How to run backend
+* How to run frontend
+* How to run tests
+* Demo walkthrough
+
+Also include an ASCII architecture diagram.
+
+# IMPLEMENTATION PRIORITY
+
+I need a WORKING DEMO today.
+
+Do NOT spend excessive time on:
+
+* fancy UI animations
+* unnecessary microservices
+* Kubernetes
+* Docker unless easy
+* production deployment
+* complex authentication
+* complicated vector databases
+
+Prioritize:
+
+1. Working end-to-end workflow
+2. Agent orchestration
+3. Deterministic security protocol
+4. Four attack demonstrations
+5. Concurrency protection
+6. Audit trail
+7. Professional dashboard
+8. Tests
+9. README
+
+# IMPORTANT
+
+If an external LLM API key is unavailable, implement a deterministic/mock LLM mode so the complete project still runs.
+
+The system must NEVER fail simply because an LLM API key is missing.
+
+Create an obvious configuration option:
+
+USE_MOCK_LLM=true
+
+for local demonstration.
+
+Finally:
+
+1. Build the entire project.
+2. Install dependencies.
+3. Run the backend.
+4. Run all automated tests.
+5. Fix errors.
+6. Verify every attack scenario.
+7. Verify the normal transaction scenario.
+8. Verify concurrent execution behavior.
+9. Make sure the frontend communicates with the backend.
+10. Give me a concise final report containing:
+
+* files created
+* how to run
+* test results
+* demo scenarios
+* known limitations
+* exact commands to start the project.
+
+Do not stop at generating a plan. Actually implement the project and test it.

@@ -1,0 +1,173 @@
+[ Natural Language Request ]
+            │
+            ▼
+┌───────────────────────────────┐
+│     Action Analysis Agent     │  (NL parsing, entity extraction, risk assessment)
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│     Deterministic Tools       │  (Key-sorted Canonicalization, SHA-256 Payload Hash)
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│  Approval Orchestrator Agent  │  (Role determination, Four-eyes policy, Unique approval_id,
+└───────────────┬───────────────┘   Token generation: {approval_id, payload_hash, expires_at})
+                │
+                ▼
+┌───────────────────────────────┐
+│    SUSPENSION & CHECKPOINT    │  (Action suspended, Checkpoint stored with canonical payload,
+└───────────────┬───────────────┘   hash & environment snapshot in SQLite)
+                │
+                ▼
+┌───────────────────────────────┐
+│    HUMAN APPROVAL EVENT       │  (Approver != Creator claimed and verified)
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│     RESUME / CLAIM EVENT      │
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│  Security Verification Agent  │  (Calls Deterministic Security Validator for 9 Checks)
+└───────────────┬───────────────┘
+                │
+                ├─────────────────────────────────────────────────┐
+       [ All 9 Checks PASS ]                             [ Any Check FAILS ]
+                │                                                 │
+                ▼                                                 ▼
+┌───────────────────────────────┐                 ┌───────────────────────────────┐
+│        Execution Agent        │                 │      REFUSE & LOG AUDIT       │
+│  (Atomic DB CAS / Lock,       │                 │  (Action marked REFUSED,      │
+│   mark CONSUMED, audit trail) │                 │   Security failure recorded)  │
+└───────────────────────────────┘                 └───────────────────────────────┘
+I have created the detailed implementation plan for the Agentic AI–Driven Secure Approval and Execution System.
+
+Core Highlights of the Plan:
+Architectural Guardrail: AI agents orchestrate, parse natural language, analyze risk, and explain decisions; deterministic cryptographic tools make the final PASS/REFUSE security decisions.
+9-Point Deterministic Security Matrix: Validates current payload hash, checkpoint hash, token hash, approval_id binding (preventing cross-action replays), expiry, four-eyes enforcement, approval status, consumed status, and environment boundary conditions.
+Attack Demonstration Lab: Dedicated interactive scenarios for:
+Attack 1: Payload Tampering (Payload mutated post-approval)
+Attack 2: Replay Across Identical Approvals (Same payload hash, distinct approval_id)
+Attack 3: Token Expiry (Execution attempted after expiration)
+Attack 4: Self-Approval (Creator == Approver violation)
+Attack 5 / Extra: World Changed / Policy Boundary Drift (Risk elevated or recipient blocked post-approval)
+Concurrency & Atomic CAS Locking: Eliminates double-execution race conditions.
+Polished Dashboard UI: Natural language parser view, interactive approval inbox, visual 9-point security matrix with green/red status checks, attack lab buttons, live agent activity timeline, and environment controller.
+Automated Test Suite: 10 automated test suites covering all required scenarios.
+Please review the plan in 
+implementation_plan.md
+ and click Proceed or provide any feedback so I can proceed with the build.
+
+Implementation Plan
+11:20 AM
+Proceeded with
+Implementation Plan
+🛡️ Agentic AI–Driven Secure Approval and Execution System
+A complete working prototype of the Agentic AI–Driven Secure Approval and Execution System has been created, tested, and verified.
+
+📁 1. Files Created
+d:/Chaitanya_docs/Project_AI/
+├── backend/
+│   ├── config.py                 # Configuration & USE_MOCK_LLM fallback
+│   ├── database.py               # SQLite engine with WAL mode & busy timeout
+│   ├── models.py                 # SQLAlchemy models (Action, Approval, Checkpoint, AuditLog, etc.)
+│   ├── schemas.py                # Pydantic v2 validation models & 9-point security schemas
+│   ├── security/
+│   │   ├── canonicalization.py   # Deterministic sorted key-value payload canonicalizer
+│   │   ├── hashing.py            # Deterministic SHA-256 computation & verification tools
+│   │   ├── tokens.py             # Signed approval tokens (approval_id + payload_hash + HMAC)
+│   │   ├── policy.py             # 9-Point Deterministic Security Verification Matrix
+│   │   └── concurrency.py        # Atomic CAS state transitions preventing double execution
+│   ├── agents/
+│   │   ├── action_agent.py       # Action Analysis Agent (NL parsing & risk assessment)
+│   │   ├── approval_agent.py     # Approval Orchestrator Agent (Four-Eyes & checkpointing)
+│   │   ├── security_agent.py     # Security Verification Agent (Investigation & audit)
+│   │   ├── execution_agent.py    # Execution Agent (Atomic state commit & settlement)
+│   │   └── graph.py              # LangGraph multi-agent state graph orchestrator
+│   ├── services/
+│   │   ├── action_service.py     # Action lifecycle management
+│   │   ├── approval_service.py   # Claim, approve, reject handlers
+│   │   ├── execution_service.py  # Resume and verification orchestrator
+│   │   ├── audit_service.py      # Immutable audit trail recording
+│   │   └── attack_service.py     # Pre-built scenarios for all 5 attack vectors
+│   └── main.py                   # FastAPI application & static dashboard mounting
+├── frontend/
+│   ├── index.html                # Cyber-security dashboard UI
+│   ├── style.css                 # Dark-theme glassmorphism styling
+│   └── app.js                    # Interactive UI logic & live attack lab runner
+├── tests/
+│   ├── conftest.py               # Test fixtures & isolated database session
+│   ├── test_approval.py          # Workflow & baseline security tests
+│   ├── test_attacks.py           # 5 attack vector test suite
+│   └── test_concurrency.py       # Race condition & concurrency stress test (10 threads)
+├── requirements.txt
+├── .env.example
+├── .env
+└── README.md
+⚡ 2. Exact Commands to Start the Project
+Start the Server (Backend + Dashboard):
+powershell
+cd d:\Chaitanya_docs\Project_AI
+.\venv\Scripts\uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
+Access URLs:
+Interactive Web Dashboard: http://127.0.0.1:8000/
+Swagger Interactive API Docs: http://127.0.0.1:8000/docs
+Health Check: http://127.0.0.1:8000/health
+🧪 3. Automated Test Results
+Run the full test suite with:
+
+powershell
+.\venv\Scripts\pytest -v
+====================== 13 passed in 8.41s ======================
+tests/test_approval.py::test_normal_approval_workflow_success                   PASSED [  7%]
+tests/test_approval.py::test_structured_creation_and_rejection                  PASSED [ 15%]
+tests/test_approval.py::test_checkpoint_hash_mismatch_fails                    PASSED [ 23%]
+tests/test_approval.py::test_approval_id_mismatch_with_matching_payload_hash    PASSED [ 30%]
+tests/test_attacks.py::test_attack1_tampered_payload_fails                      PASSED [ 38%]
+tests/test_attacks.py::test_attack2_replay_across_identical_approvals_fails     PASSED [ 46%]
+tests/test_attacks.py::test_attack3_expired_approval_fails                      PASSED [ 53%]
+tests/test_attacks.py::test_attack4_self_approval_fails                         PASSED [ 61%]
+tests/test_attacks.py::test_attack5_world_changed_boundary_fails                PASSED [ 69%]
+tests/test_attacks.py::test_consumed_approval_cannot_execute_again              PASSED [ 76%]
+tests/test_attacks.py::test_attack_lab_service_demos                            PASSED [ 84%]
+tests/test_attacks.py::test_api_attack_endpoints                                PASSED [ 92%]
+tests/test_concurrency.py::test_concurrent_execution_race_condition              PASSED [100%]
+🚨 4. Demo Scenarios & Attack Laboratory
+Attack / Scenario	Threat Vector	Deterministic Defense	UI / API Outcome
+Normal Transaction	Baseline Legitimate Flow	All 9 gates evaluate to PASS	EXECUTED
+Attack 1: Tampering	Database payload modified from ₹50,000 to ₹500,000 post-approval	approved_hash != current_hash	REFUSED — PAYLOAD TAMPERING DETECTED
+Attack 2: Replay Across Identical Approvals	Reusing token from Action A on Action B having the exact same payload hash	token.approval_id != stored_approval_id	REFUSED — APPROVAL ID MISMATCH (Demonstrates why payload_hash alone is insecure)
+Attack 3: Expiry Attack	Action executed after authorization TTL has elapsed	current_time > approval.expires_at	REFUSED — APPROVAL EXPIRED
+Attack 4: Self-Approval	Creator Alice attempts to approve her own action	creator_id == approver_id	REFUSED — FOUR-EYES POLICY VIOLATION
+Demo: World Changed	Risk elevated to HIGH or recipient marked BLOCKED after approval	Live boundary re-evaluation at resume	REFUSED — POLICY BOUNDARIES CHANGED
+Concurrency Race	10 simultaneous execution requests fired against a single approval	Atomic CAS: UPDATE ... WHERE is_consumed = 0	1 EXECUTED, 9 SAFELY REFUSED
+🔒 5. The 9-Point Security Gate Matrix
+Every action must pass all 9 deterministic security checks before the Execution Agent can settle:
+
+Recomputed Current Payload Hash: Live re-canonicalization and SHA-256 hash match.
+Checkpoint Hash Consistency: Suspension checkpoint matches live payload.
+Token Payload Hash Match: Token cryptographically binds the identical hash.
+Approval ID Anti-Replay Binding: Token binds the specific unique approval_id.
+Time-to-Live (TTL) Expiry: Authorization timestamp is active.
+Four-Eyes Enforcement: Approver identity is strictly distinct from Initiator.
+Approval State Machine: Approval state is strictly APPROVED.
+Single-Use Gate: Approval is not consumed (is_consumed == False).
+Live Policy Boundaries: Real-time evaluation of risk level, limits, AML/sanctions registry, and account status.
+⚠️ 6. Known Limitations & Production Roadmap
+Database Engine: Uses SQLite in WAL mode with atomic CAS for local simplicity. In a high-throughput production deployment, PostgreSQL with row-level locking (SELECT ... FOR UPDATE) should be utilized.
+Key Management: Uses HMAC-SHA256 with an application secret key. In multi-cluster production environments, an asymmetric key pair (Ed25519 or ECDSA) backed by AWS KMS or HashiCorp Vault is recommended.
+LLM Provider Mode: Operates out-of-the-box with USE_MOCK_LLM=true for 100% offline determinism. If an OPENAI_API_KEY is provided in .env, it automatically switches to live LangChain/LangGraph OpenAI models.
+Detailed documentation and walkthrough artifacts:
+Implementation Plan: 
+implementation_plan.md
+Walkthrough Document: 
+walkthrough.md
+Project README: 
+
+README.md
+Walkthrough
+11:23 AM

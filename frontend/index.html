@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic AI Secure Approval & Execution System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="dark-theme">
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-left">
+            <div class="logo-shield">
+                <span class="shield-icon">🛡️</span>
+            </div>
+            <div>
+                <h1 class="brand-title">Agentic AI <span class="accent-text">Secure Execution</span></h1>
+                <p class="brand-subtitle">Cryptographic Protocol • Canonical Hashing • Four-Eyes Enforcement • 9-Point Verification Gate</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="status-pill status-active" id="system-status-pill">
+                <span class="pulse-dot"></span>
+                <span id="system-mode-text">Deterministic Guardrail ACTIVE</span>
+            </div>
+            <button class="btn btn-secondary btn-sm" id="btn-refresh-data" title="Refresh Dashboard Data">
+                🔄 Sync Live Data
+            </button>
+            <button class="btn btn-outline-danger btn-sm" id="btn-reset-env" title="Reset Simulated Environment">
+                ⚙️ Reset Environment
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="dashboard-grid">
+
+        <!-- Top Metrics Row -->
+        <section class="metrics-container">
+            <div class="metric-card">
+                <div class="metric-icon blue">📊</div>
+                <div class="metric-info">
+                    <span class="metric-label">Total Actions</span>
+                    <span class="metric-value" id="metric-total">0</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon amber">⏳</div>
+                <div class="metric-info">
+                    <span class="metric-label">Pending Approvals</span>
+                    <span class="metric-value" id="metric-pending">0</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon purple">✍️</div>
+                <div class="metric-info">
+                    <span class="metric-label">Approved (Suspended)</span>
+                    <span class="metric-value" id="metric-approved">0</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon green">✅</div>
+                <div class="metric-info">
+                    <span class="metric-label">Executed & Consumed</span>
+                    <span class="metric-value" id="metric-executed">0</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon red">🛑</div>
+                <div class="metric-info">
+                    <span class="metric-label">Execution Refused</span>
+                    <span class="metric-value" id="metric-refused">0</span>
+                </div>
+            </div>
+            <div class="metric-card highlight-danger">
+                <div class="metric-icon red-glow">⚔️</div>
+                <div class="metric-info">
+                    <span class="metric-label">Attacks Blocked</span>
+                    <span class="metric-value" id="metric-attacks">0</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Attack Simulation Laboratory Banner -->
+        <section class="panel panel-lab">
+            <div class="panel-header">
+                <div class="panel-title-wrap">
+                    <span class="panel-icon">🧪</span>
+                    <div>
+                        <h2 class="panel-title">Interactive Attack Simulation Laboratory</h2>
+                        <p class="panel-desc">Test cryptographic boundaries, replay attacks, time decay, identity spoofing, and environment shifts in 1-click.</p>
+                    </div>
+                </div>
+                <div class="lab-badge">DETERMINISTIC VERIFICATION DEMO</div>
+            </div>
+            <div class="attack-cards-grid">
+                <!-- Normal Transaction -->
+                <div class="attack-card card-normal">
+                    <div class="attack-header">
+                        <span class="attack-tag tag-success">Compliant Flow</span>
+                        <h3 class="attack-name">Normal Transaction</h3>
+                    </div>
+                    <p class="attack-summary">₹15,000 payment from Alice to Ravi approved by Bob. Passes all 9 deterministic security gates.</p>
+                    <button class="btn btn-success btn-full" id="btn-run-normal">▶ Run Baseline Test</button>
+                </div>
+
+                <!-- Attack 1: Tampering -->
+                <div class="attack-card card-danger">
+                    <div class="attack-header">
+                        <span class="attack-tag tag-danger">Attack 1</span>
+                        <h3 class="attack-name">Payload Tampering</h3>
+                    </div>
+                    <p class="attack-summary">Approve ₹50,000, then silently mutate DB row to ₹500,000 before resume. Detects hash mismatch.</p>
+                    <button class="btn btn-danger btn-full" id="btn-attack-tamper">⚡ Test Tampering</button>
+                </div>
+
+                <!-- Attack 2: Replay -->
+                <div class="attack-card card-warning">
+                    <div class="attack-header">
+                        <span class="attack-tag tag-warning">Attack 2</span>
+                        <h3 class="attack-name">Identical Payload Replay</h3>
+                    </div>
+                    <p class="attack-summary">Actions A & B have identical hashes. Token A is reused on Action B. Blocked by approval_id check!</p>
+                    <button class="btn btn-warning btn-full" id="btn-attack-replay">⚡ Test Replay</button>
+                </div>
+
+                <!-- Attack 3: Expiry -->
+                <div class="attack-card card-danger">
+                    <div class="attack-header">
+                        <span class="attack-tag tag-danger">Attack 3</span>
+                        <h3 class="attack-name">Token TTL Expiry</h3>
+                    </div>
+                    <p class="attack-summary">Action approved, but resume is attempted after expiration window elapsed. Blocked by TTL clock check.</p>
+                    <button class="btn btn-danger btn-full" id="btn-attack-expiry">⚡ Test Expiry</button>
+                </div>
+
+                <!-- Attack 4: Self-Approval -->
+                <div class="attack-card card-danger">
+                    <div class="attack-header">
+                        <span class="attack-tag tag-danger">Attack 4</span>
+                        <h3 class="attack-name">Self-Approval (Four-Eyes)</h3>
+                    </div>
+                    <p class="attack-summary">Initiator Alice attempts to self-approve her own transaction. Blocked by Creator != Approver policy.</p>
+                    <button class="btn btn-danger btn-full" id="btn-attack-self">⚡ Test Self-Approval</button>
+                </div>
+
+                <!-- Attack 5: World Changed -->
+                <div class="attack-card card-purple">
+                    <div class="attack-header">
+                        <span class="attack-tag tag-purple">Demo Scenario</span>
+                        <h3 class="attack-name">World Changed (Policy Drift)</h3>
+                    </div>
+                    <p class="attack-summary">Approved when risk=LOW. Before resume, risk=HIGH / recipient=BLOCKED. Blocked at resume gate!</p>
+                    <button class="btn btn-purple btn-full" id="btn-attack-world">⚡ Test Policy Drift</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Two Column Layout: Action Creator + Environment Controller -->
+        <div class="dashboard-columns">
+            
+            <!-- Left Column: Action Creator -->
+            <section class="panel">
+                <div class="panel-header">
+                    <div class="panel-title-wrap">
+                        <span class="panel-icon">💡</span>
+                        <div>
+                            <h2 class="panel-title">Action Analysis Agent (Natural Language)</h2>
+                            <p class="panel-desc">Submit actions in natural language. Agent parses schema, computes canonical payload and SHA-256 hash.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-body">
+                    <form id="action-create-form">
+                        <div class="form-group">
+                            <label for="nl-prompt">Natural Language Action Request:</label>
+                            <div class="input-with-templates">
+                                <textarea id="nl-prompt" rows="3" class="form-control" placeholder="e.g. Transfer ₹50,000 to Ravi for cloud server infrastructure" required></textarea>
+                            </div>
+                            <div class="template-chips">
+                                <span class="chip-label">Presets:</span>
+                                <button type="button" class="chip" data-prompt="Transfer ₹50,000 to Ravi for cloud server infrastructure">₹50k to Ravi (IT Cloud)</button>
+                                <button type="button" class="chip" data-prompt="Wire $25,000 USD to ACME_CORP for security licensing">₹25k USD to ACME</button>
+                                <button type="button" class="chip" data-prompt="Grant ADMIN access to security_auditor on Core Ledger">Grant Admin Access</button>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col">
+                                <label for="creator-select">Initiator Identity (Creator):</label>
+                                <select id="creator-select" class="form-control">
+                                    <option value="alice">Alice (Operator)</option>
+                                    <option value="bob">Bob (Manager)</option>
+                                    <option value="carol">Carol (Security Admin)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Real-time extraction preview -->
+                        <div class="live-preview-box" id="nl-preview-box">
+                            <div class="preview-header">
+                                <span class="preview-title">Real-Time Cryptographic Preview</span>
+                                <span class="badge badge-info" id="preview-risk-badge">Risk: Calculating</span>
+                            </div>
+                            <div class="preview-row">
+                                <span class="preview-key">Canonical Payload:</span>
+                                <code class="preview-code" id="preview-canonical">action_type=PAYMENT|amount=50000.00|creator=alice|currency=INR|description=...|recipient=RAVI</code>
+                            </div>
+                            <div class="preview-row">
+                                <span class="preview-key">Deterministic SHA-256:</span>
+                                <code class="preview-hash" id="preview-hash">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</code>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary" id="btn-submit-action">
+                                🚀 Create Action, Checkpoint & Suspend
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Right Column: Simulated Environment State Controller -->
+            <section class="panel">
+                <div class="panel-header">
+                    <div class="panel-title-wrap">
+                        <span class="panel-icon">🌐</span>
+                        <div>
+                            <h2 class="panel-title">Simulated Environment State Controller</h2>
+                            <p class="panel-desc">Simulate real-time policy conditions evaluated dynamically at RESUME time.</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline btn-sm" id="btn-save-env">💾 Save Policy</button>
+                </div>
+
+                <div class="panel-body">
+                    <div class="env-grid">
+                        <div class="form-group">
+                            <label for="env-risk">Global Risk Level:</label>
+                            <select id="env-risk" class="form-control">
+                                <option value="LOW">LOW (Normal Operation)</option>
+                                <option value="MEDIUM">MEDIUM (Elevated Monitoring)</option>
+                                <option value="HIGH">HIGH (Restricted Outbound)</option>
+                                <option value="CRITICAL">CRITICAL (Total Freeze)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="env-recipient">Recipient Registry Status:</label>
+                            <select id="env-recipient" class="form-control">
+                                <option value="TRUSTED">TRUSTED (Whitelisted)</option>
+                                <option value="SUSPICIOUS">SUSPICIOUS (Threshold Capped)</option>
+                                <option value="BLOCKED">BLOCKED (Sanctions / Blacklist)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="env-account">Source Account Status:</label>
+                            <select id="env-account" class="form-control">
+                                <option value="ACTIVE">ACTIVE (Normal)</option>
+                                <option value="RESTRICTED">RESTRICTED (Limited to ₹10k)</option>
+                                <option value="FROZEN">FROZEN (Outbound Blocked)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="env-tx-limit">Max Transaction Limit (₹):</label>
+                            <input type="number" id="env-tx-limit" class="form-control" value="200000" step="10000">
+                        </div>
+                    </div>
+
+                    <div class="policy-callout">
+                        <strong>Deterministic Principle:</strong> AI agents do not override these boundary limits. At resume time, if risk=HIGH or recipient=BLOCKED, the security gate refuses execution automatically.
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Security Verification Matrix & Active Inspection Panel -->
+        <section class="panel panel-inspection" id="section-security-matrix">
+            <div class="panel-header">
+                <div class="panel-title-wrap">
+                    <span class="panel-icon">🔍</span>
+                    <div>
+                        <h2 class="panel-title">9-Point Deterministic Security Verification Matrix</h2>
+                        <p class="panel-desc">All 9 cryptographic and deterministic policy gates must evaluate to PASS before Execution Agent can act.</p>
+                    </div>
+                </div>
+                <div class="verification-badge" id="matrix-aggregate-badge">Awaiting Evaluation</div>
+            </div>
+
+            <div class="panel-body">
+                <div class="matrix-grid" id="matrix-grid">
+                    <!-- Check 1 -->
+                    <div class="matrix-card" id="card-chk-1">
+                        <div class="matrix-card-header">
+                            <span class="check-num">01</span>
+                            <span class="check-title">Recomputed Payload Hash</span>
+                            <span class="check-status-pill neutral" id="chk-pill-1">PENDING</span>
+                        </div>
+                        <p class="check-desc">Recomputed SHA-256 hash matches action payload</p>
+                        <div class="check-meta" id="chk-meta-1">Awaiting resume event</div>
+                    </div>
+
+                    <!-- Check 2 -->
+                    <div class="matrix-card" id="card-chk-2">
+                        <div class="matrix-card-header">
+                            <span class="check-num">02</span>
+                            <span class="check-title">Checkpoint Hash Match</span>
+                            <span class="check-status-pill neutral" id="chk-pill-2">PENDING</span>
+                        </div>
+                        <p class="check-desc">Suspension snapshot matches current live payload</p>
+                        <div class="check-meta" id="chk-meta-2">Awaiting resume event</div>
+                    </div>
+
+                    <!-- Check 3 -->
+                    <div class="matrix-card" id="card-chk-3">
+                        <div class="matrix-card-header">
+                            <span class="check-num">03</span>
+                            <span class="check-title">Token Payload Hash</span>
+                            <span class="check-status-pill neutral" id="chk-pill-3">PENDING</span>
+                        </div>
+                        <p class="check-desc">Cryptographic token binds identical SHA-256 hash</p>
+                        <div class="check-meta" id="chk-meta-3">Awaiting resume event</div>
+                    </div>
+
+                    <!-- Check 4 -->
+                    <div class="matrix-card" id="card-chk-4">
+                        <div class="matrix-card-header">
+                            <span class="check-num">04</span>
+                            <span class="check-title">Approval ID Anti-Replay</span>
+                            <span class="check-status-pill neutral" id="chk-pill-4">PENDING</span>
+                        </div>
+                        <p class="check-desc">Token approval_id matches exact target action instance</p>
+                        <div class="check-meta" id="chk-meta-4">Awaiting resume event</div>
+                    </div>
+
+                    <!-- Check 5 -->
+                    <div class="matrix-card" id="card-chk-5">
+                        <div class="matrix-card-header">
+                            <span class="check-num">05</span>
+                            <span class="check-title">TTL Expiry Validation</span>
+                            <span class="check-status-pill neutral" id="chk-pill-5">PENDING</span>
+                        </div>
+                        <p class="check-desc">Approval authorization is within valid time window</p>
+                        <div class="check-meta" id="chk-meta-5">Awaiting resume event</div>
+                    </div>
+
+                    <!-- Check 6 -->
+                    <div class="matrix-card" id="card-chk-6">
+                        <div class="matrix-card-header">
+                            <span class="check-num">06</span>
+                            <span class="check-title">Four-Eyes Separation</span>
+                            <span class="check-status-pill neutral" id="chk-pill-6">PENDING</span>
+                        </div>
+                        <p class="check-desc">Creator ID strictly different from Approver ID</p>
+                        <div class="check-meta" id="chk-meta-6">Awaiting resume event</div>
+                    </div>
+
+                    <!-- Check 7 -->
+                    <div class="matrix-card" id="card-chk-7">
+                        <div class="matrix-card-header">
+                            <span class="check-num">07</span>
+                            <span class="check-title">Approval State Machine</span>
+                            <span class="check-status-pill neutral" id="chk-pill-7">PENDING</span>
+                        </div>
+                        <p class="check-desc">Record is confirmed in APPROVED state</p>
+                        <div class="check-meta" id="chk-meta-7">Awaiting resume event</div>
+                    </div>
+
+                    <!-- Check 8 -->
+                    <div class="matrix-card" id="card-chk-8">
+                        <div class="matrix-card-header">
+                            <span class="check-num">08</span>
+                            <span class="check-title">Single-Use (Not Consumed)</span>
+                            <span class="check-status-pill neutral" id="chk-pill-8">PENDING</span>
+                        </div>
+                        <p class="check-desc">Atomic CAS check prevents double execution</p>
+                        <div class="check-meta" id="chk-meta-8">Awaiting resume event</div>
+                    </div>
+
+                    <!-- Check 9 -->
+                    <div class="matrix-card" id="card-chk-9">
+                        <div class="matrix-card-header">
+                            <span class="check-num">09</span>
+                            <span class="check-title">Live Policy Boundaries</span>
+                            <span class="check-status-pill neutral" id="chk-pill-9">PENDING</span>
+                        </div>
+                        <p class="check-desc">Account active, recipient trusted, limits satisfied</p>
+                        <div class="check-meta" id="chk-meta-9">Awaiting resume event</div>
+                    </div>
+                </div>
+
+                <!-- Live Audit Explanation Terminal -->
+                <div class="explanation-box" id="explanation-box">
+                    <div class="explanation-header">
+                        <span class="term-dot red"></span>
+                        <span class="term-dot yellow"></span>
+                        <span class="term-dot green"></span>
+                        <span class="term-title">Security Verification Agent • Audit Trail & Decision Rationale</span>
+                    </div>
+                    <div class="terminal-body" id="explanation-text">
+                        Select an action below and click "Resume & Execute" or trigger an Attack Demonstration above to view real-time cryptographic verification details.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Actions & Approvals Queue -->
+        <section class="panel">
+            <div class="panel-header">
+                <div class="panel-title-wrap">
+                    <span class="panel-icon">📋</span>
+                    <div>
+                        <h2 class="panel-title">Actions & Approval Ledger</h2>
+                        <p class="panel-desc">Manage pending human approvals, inspect tokens, and trigger deterministic resumes.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-body">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Action ID</th>
+                                <th>Action Type</th>
+                                <th>Amount & Recipient</th>
+                                <th>Creator</th>
+                                <th>Approval ID / Status</th>
+                                <th>Payload Hash (SHA-256)</th>
+                                <th>Actions & Verification</th>
+                            </tr>
+                        </thead>
+                        <tbody id="actions-table-body">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">No actions recorded yet. Create an action above or run a test scenario.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Agent Activity Timeline -->
+        <section class="panel">
+            <div class="panel-header">
+                <div class="panel-title-wrap">
+                    <span class="panel-icon">⏱️</span>
+                    <div>
+                        <h2 class="panel-title">Agent Activity Live Timeline</h2>
+                        <p class="panel-desc">Real-time event stream from Action Analysis, Approval Orchestrator, Security Verification, and Execution Agents.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-body">
+                <div class="timeline" id="agent-timeline">
+                    <div class="timeline-empty text-muted">Awaiting system events...</div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal for Approval Decision -->
+    <div class="modal-overlay" id="approval-modal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Authorize Suspended Action</h3>
+                <button class="modal-close" id="btn-close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-action-info" id="modal-action-summary">
+                    <!-- Dynamic summary -->
+                </div>
+                
+                <div class="form-group">
+                    <label for="modal-approver-select">Approver Identity (Must satisfy Four-Eyes):</label>
+                    <select id="modal-approver-select" class="form-control">
+                        <option value="bob">Bob (Manager) - Authorized</option>
+                        <option value="carol">Carol (Security Admin) - Authorized</option>
+                        <option value="alice">Alice (Creator - Will Trigger Four-Eyes Violation)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="modal-comment">Approval Comment / Note:</label>
+                    <input type="text" id="modal-comment" class="form-control" value="Verified vendor invoice and budgetary allocation.">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-modal-reject">❌ Reject Action</button>
+                <button class="btn btn-success" id="btn-modal-approve">✅ Issue Signed Token & Approve</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/app.js"></script>
+</body>
+</html>
